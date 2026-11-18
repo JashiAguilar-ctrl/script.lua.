@@ -1,0 +1,64 @@
+
+-- Blox Fruits Utility Hub
+-- Safe utility starter script
+-- No guaranteed drops or anti-ban bypasses
+
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+
+local Player = Players.LocalPlayer
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BloxFruitsUtilityHub"
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 280, 0, 180)
+Frame.Position = UDim2.new(0.5, -140, 0.5, -90)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Frame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "Blox Fruits Utility Hub"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundColor3 = Color3.fromRGB(120, 50, 200)
+Title.Parent = Frame
+
+local function createButton(name, position, callback)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(0.85, 0, 0, 35)
+    Button.Position = position
+    Button.Text = name
+    Button.Parent = Frame
+    Button.MouseButton1Click:Connect(callback)
+end
+
+createButton("Check My Character", UDim2.new(0.075, 0, 0, 55), function()
+    local Character = Player.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+    local message = Humanoid and
+        ("Health: " .. math.floor(Humanoid.Health)) or
+        "Character not loaded"
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Character Status",
+        Text = message,
+        Duration = 4
+    })
+end)
+
+createButton("Check Fruit Inventory", UDim2.new(0.075, 0, 0, 100), function()
+    StarterGui:SetCore("SendNotification", {
+        Title = "Fruit Inventory",
+        Text = "Check your in-game inventory.",
+        Duration = 4
+    })
+end)
+
+createButton("Close Hub", UDim2.new(0.075, 0, 0, 145), function()
+    ScreenGui:Destroy()
+end)
+
+ScreenGui.Parent = game:GetService("CoreGui")
