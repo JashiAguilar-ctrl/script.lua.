@@ -1,64 +1,533 @@
 
--- Blox Fruits Utility Hub
--- Safe utility starter script
--- No guaranteed drops or anti-ban bypasses
+--========================================================
+--             JASHI KIASKE UTILITY HUB
+--             BLOX FRUITS EDITION
+--             BLUE & BLACK THEME
+--========================================================
+-- KEYLESS | NO PASSWORD
+-- MINIMIZE | REOPEN | CLOSE
+-- FRUIT TRACKER | INVENTORY | NOTIFICATIONS
+--
+-- IMPORTANT:
+-- This is a client-side utility interface.
+-- It cannot change official fruit spin odds or
+-- control another player's trading decisions.
+--========================================================
 
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
 
 local Player = Players.LocalPlayer
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BloxFruitsUtilityHub"
-ScreenGui.ResetOnSpawn = false
+--========================================================
+-- SETTINGS
+--========================================================
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 280, 0, 180)
-Frame.Position = UDim2.new(0.5, -140, 0.5, -90)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-Frame.Parent = ScreenGui
+local HUB_NAME = "JASHI KIASKE"
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "Blox Fruits Utility Hub"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.BackgroundColor3 = Color3.fromRGB(120, 50, 200)
-Title.Parent = Frame
+local BLUE = Color3.fromRGB(0, 145, 255)
+local DARK = Color3.fromRGB(10, 14, 25)
+local PANEL = Color3.fromRGB(20, 29, 45)
+local WHITE = Color3.fromRGB(245, 248, 255)
+local RED = Color3.fromRGB(190, 50, 60)
 
-local function createButton(name, position, callback)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(0.85, 0, 0, 35)
-    Button.Position = position
-    Button.Text = name
-    Button.Parent = Frame
-    Button.MouseButton1Click:Connect(callback)
+--========================================================
+-- FRUIT DATABASE
+--========================================================
+
+local MythicalFruits = {
+    ["Gravity"] = true,
+    ["Mammoth"] = true,
+    ["T-Rex"] = true,
+    ["Dough"] = true,
+    ["Shadow"] = true,
+    ["Venom"] = true,
+    ["Gas"] = true,
+    ["Spirit"] = true,
+    ["Tiger"] = true,
+    ["Yeti"] = true,
+    ["Magnet"] = true,
+    ["Kitsune"] = true,
+    ["Control"] = true,
+    ["Dragon"] = true,
+    ["Dragon East"] = true,
+    ["Dragon West"] = true
+}
+
+local SpinHistory = {}
+
+local function normalizeFruit(name)
+    name = string.lower(name)
+    name = name:gsub("%s+", " ")
+    name = name:gsub("^%s+", "")
+    name = name:gsub("%s+$", "")
+    name = name:gsub("%-", " ")
+
+    return name
 end
 
-createButton("Check My Character", UDim2.new(0.075, 0, 0, 55), function()
-    local Character = Player.Character
-    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+local function isTrackedFruit(name)
+    local normalized = normalizeFruit(name)
 
-    local message = Humanoid and
-        ("Health: " .. math.floor(Humanoid.Health)) or
-        "Character not loaded"
+    for fruit in pairs(MythicalFruits) do
+        if normalizeFruit(fruit) == normalized then
+            return true
+        end
+    end
 
-    StarterGui:SetCore("SendNotification", {
-        Title = "Character Status",
-        Text = message,
-        Duration = 4
-    })
+    return false
+end
+
+--========================================================
+-- GUI CREATION
+--========================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "JashiKiaskeHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 100
+
+local success, CoreGui = pcall(function()
+    return game:GetService("CoreGui")
 end)
 
-createButton("Check Fruit Inventory", UDim2.new(0.075, 0, 0, 100), function()
-    StarterGui:SetCore("SendNotification", {
-        Title = "Fruit Inventory",
-        Text = "Check your in-game inventory.",
-        Duration = 4
-    })
+if success then
+    local old = CoreGui:FindFirstChild("JashiKiaskeHub")
+    if old then
+        old:Destroy()
+    end
+
+    ScreenGui.Parent = CoreGui
+else
+    ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+end
+
+--========================================================
+-- MAIN WINDOW
+--========================================================
+
+local Main = Instance.new("Frame")
+Main.Name = "MainWindow"
+Main.Size = UDim2.fromOffset(340, 510)
+Main.Position = UDim2.new(0.5, -170, 0.5, -255)
+Main.BackgroundColor3 = DARK
+Main.BorderSizePixel = 0
+Main.Parent = ScreenGui
+
+Instance.new("UICorner", Main).CornerRadius =
+    UDim.new(0, 12)
+
+local Outline = Instance.new("UIStroke")
+Outline.Color = BLUE
+Outline.Thickness = 2
+Outline.Parent = Main
+
+--========================================================
+-- HEADER
+--========================================================
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 55)
+Header.BackgroundColor3 = PANEL
+Header.BorderSizePixel = 0
+Header.Parent = Main
+
+Instance.new("UICorner", Header).CornerRadius =
+    UDim.new(0, 12)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0.62, 0, 1, 0)
+Title.Position = UDim2.fromOffset(12, 0)
+Title.BackgroundTransparency = 1
+Title.Text = HUB_NAME
+Title.TextColor3 = BLUE
+Title.TextSize = 19
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+-- MINIMIZE BUTTON
+
+local Minimize = Instance.new("TextButton")
+Minimize.Size = UDim2.fromOffset(30, 30)
+Minimize.Position = UDim2.new(1, -75, 0, 12)
+Minimize.BackgroundColor3 = BLUE
+Minimize.Text = "-"
+Minimize.TextColor3 = WHITE
+Minimize.TextSize = 22
+Minimize.Font = Enum.Font.GothamBold
+Minimize.Parent = Header
+
+Instance.new("UICorner", Minimize).CornerRadius =
+    UDim.new(0, 7)
+
+-- CLOSE BUTTON
+
+local Close = Instance.new("TextButton")
+Close.Size = UDim2.fromOffset(30, 30)
+Close.Position = UDim2.new(1, -38, 0, 12)
+Close.BackgroundColor3 = RED
+Close.Text = "X"
+Close.TextColor3 = WHITE
+Close.TextSize = 15
+Close.Font = Enum.Font.GothamBold
+Close.Parent = Header
+
+Instance.new("UICorner", Close).CornerRadius =
+    UDim.new(0, 7)
+
+--========================================================
+-- REOPEN BUTTON
+--========================================================
+
+local Reopen = Instance.new("TextButton")
+Reopen.Name = "ReopenButton"
+Reopen.Size = UDim2.fromOffset(155, 42)
+Reopen.Position = UDim2.new(0, 20, 0.5, 0)
+Reopen.BackgroundColor3 = DARK
+Reopen.Text = "JASHI KIASKE  +"
+Reopen.TextColor3 = BLUE
+Reopen.TextSize = 13
+Reopen.Font = Enum.Font.GothamBold
+Reopen.Visible = false
+Reopen.Parent = ScreenGui
+
+Instance.new("UICorner", Reopen).CornerRadius =
+    UDim.new(0, 9)
+
+local ReopenStroke = Instance.new("UIStroke")
+ReopenStroke.Color = BLUE
+ReopenStroke.Thickness = 2
+ReopenStroke.Parent = Reopen
+
+--========================================================
+-- WINDOW CONTROLS
+--========================================================
+
+Minimize.MouseButton1Click:Connect(function()
+    Main.Visible = false
+    Reopen.Visible = true
 end)
 
-createButton("Close Hub", UDim2.new(0.075, 0, 0, 145), function()
+Reopen.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    Reopen.Visible = false
+end)
+
+Close.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-ScreenGui.Parent = game:GetService("CoreGui")
+--========================================================
+-- DRAGGABLE WINDOW
+--========================================================
+
+local dragging = false
+local dragStart
+local startPosition
+local dragInput
+
+Header.InputBegan:Connect(function(input)
+
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        dragging = true
+        dragStart = input.Position
+        startPosition = Main.Position
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+
+    if dragging and (
+        input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch
+    ) then
+
+        local delta = input.Position - dragStart
+
+        Main.Position = UDim2.new(
+            startPosition.X.Scale,
+            startPosition.X.Offset + delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+
+    if input == dragInput
+    or input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        dragging = false
+        dragInput = nil
+    end
+end)
+
+--========================================================
+-- NOTIFICATION SYSTEM
+--========================================================
+
+local function notify(title, message)
+
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = message,
+            Duration = 5
+        })
+    end)
+end
+
+--========================================================
+-- BUTTON CREATOR
+--========================================================
+
+local function createButton(name, y, callback)
+
+    local Button = Instance.new("TextButton")
+
+    Button.Size = UDim2.new(0.88, 0, 0, 38)
+    Button.Position = UDim2.new(0.06, 0, 0, y)
+    Button.BackgroundColor3 = PANEL
+    Button.Text = name
+    Button.TextColor3 = WHITE
+    Button.Font = Enum.Font.GothamSemibold
+    Button.TextSize = 12
+    Button.Parent = Main
+
+    Instance.new("UICorner", Button).CornerRadius =
+        UDim.new(0, 7)
+
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = BLUE
+    Stroke.Thickness = 1
+    Stroke.Parent = Button
+
+    Button.MouseButton1Click:Connect(callback)
+
+    return Button
+end
+
+--========================================================
+-- CHARACTER CHECKER
+--========================================================
+
+createButton("CHECK CHARACTER", 75, function()
+
+    local Character = Player.Character
+
+    local Humanoid = Character and
+        Character:FindFirstChildOfClass("Humanoid")
+
+    if Humanoid then
+
+        notify(
+            "CHARACTER STATUS",
+            "Health: " ..
+            math.floor(Humanoid.Health) ..
+            " / " ..
+            math.floor(Humanoid.MaxHealth)
+        )
+
+    else
+
+        notify("CHARACTER STATUS", "Character not loaded.")
+
+    end
+end)
+
+--========================================================
+-- INVENTORY CHECKER
+--========================================================
+
+createButton("CHECK FRUIT / TOOL INVENTORY", 122, function()
+
+    local Items = {}
+
+    local Backpack = Player:FindFirstChild("Backpack")
+    local Character = Player.Character
+
+    if Backpack then
+
+        for _, item in ipairs(Backpack:GetChildren()) do
+
+            if item:IsA("Tool") then
+                table.insert(Items, item.Name)
+            end
+
+        end
+    end
+
+    if Character then
+
+        for _, item in ipairs(Character:GetChildren()) do
+
+            if item:IsA("Tool") then
+                table.insert(Items, item.Name)
+            end
+
+        end
+    end
+
+    if #Items == 0 then
+
+        notify("INVENTORY", "No visible tools found.")
+
+    else
+
+        notify(
+            "INVENTORY",
+            table.concat(Items, ", ")
+        )
+
+    end
+end)
+
+--========================================================
+-- FRUIT INPUT
+--========================================================
+
+local FruitInput = Instance.new("TextBox")
+
+FruitInput.Size = UDim2.new(0.88, 0, 0, 36)
+FruitInput.Position = UDim2.new(0.06, 0, 0, 185)
+FruitInput.BackgroundColor3 = PANEL
+FruitInput.TextColor3 = WHITE
+FruitInput.PlaceholderColor3 =
+    Color3.fromRGB(140, 150, 170)
+FruitInput.PlaceholderText = "Enter obtained fruit name..."
+FruitInput.Text = ""
+FruitInput.Font = Enum.Font.Gotham
+FruitInput.TextSize = 12
+FruitInput.ClearTextOnFocus = false
+FruitInput.Parent = Main
+
+Instance.new("UICorner", FruitInput).CornerRadius =
+    UDim.new(0, 7)
+
+local InputStroke = Instance.new("UIStroke")
+InputStroke.Color = BLUE
+InputStroke.Parent = FruitInput
+
+--========================================================
+-- SAVE FRUIT RESULT
+--========================================================
+
+createButton("SAVE FRUIT RESULT", 232, function()
+
+    local Fruit = FruitInput.Text
+
+    if Fruit == "" then
+
+        notify("FRUIT TRACKER", "Enter a fruit name first.")
+        return
+
+    end
+
+    table.insert(SpinHistory, Fruit)
+
+    if isTrackedFruit(Fruit) then
+
+        notify(
+            "TRACKED FRUIT!",
+            Fruit .. " recorded in your history."
+        )
+
+    else
+
+        notify(
+            "FRUIT TRACKER",
+            Fruit .. " recorded successfully."
+        )
+
+    end
+
+    FruitInput.Text = ""
+
+end)
+
+--========================================================
+-- VIEW FRUIT HISTORY
+--========================================================
+
+createButton("VIEW FRUIT SPIN HISTORY", 279, function()
+
+    if #SpinHistory == 0 then
+
+        notify("FRUIT HISTORY", "No recorded results.")
+        return
+
+    end
+
+    local LastResults = {}
+
+    local first = math.max(1, #SpinHistory - 2)
+
+    for i = first, #SpinHistory do
+        table.insert(LastResults, SpinHistory[i])
+    end
+
+    notify(
+        "FRUIT HISTORY",
+        "Total: " .. #SpinHistory ..
+        " | Recent: " .. table.concat(LastResults, ", ")
+    )
+
+end)
+
+--========================================================
+-- VIEW TRACKED FRUITS
+--========================================================
+
+createButton("VIEW TRACKED FRUITS", 326, function()
+
+    notify(
+        "FRUIT DATABASE",
+        "14 requested fruit types tracked, including Dragon East/West."
+    )
+
+end)
+
+--========================================================
+-- TRADE ASSISTANT
+--========================================================
+
+createButton("TRADE ASSISTANT", 373, function()
+
+    notify(
+        "TRADE ASSISTANT",
+        "Monitor offers through the official trade interface. " ..
+        "Other players control their own trades."
+    )
+
+end)
+
+--========================================================
+-- HUB STATUS
+--========================================================
+
+createButton("HUB STATUS", 420, function()
+
+    notify(
+        HUB_NAME,
+        "Blue & Black Hub is running!"
+    )
+
+end)
+
+--========================================================
+-- STARTUP
+--========================================================
+
+notify(
+    HUB_NAME,
+    "Utility Hub successfully loaded! No key required."
+)
+
+                                                                                                    
